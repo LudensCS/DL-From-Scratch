@@ -21,7 +21,7 @@ def tahn(z: Var) -> Var:
 
     support tensor input
     """
-    return (np.exp(z) + np.exp(-z)) / (np.exp(z) - np.exp(-z))
+    return (np.exp(z) - np.exp(-z)) / (np.exp(z) + np.exp(-z))
 
 
 def relu(z: Var) -> Var:
