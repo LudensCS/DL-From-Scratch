@@ -7,7 +7,7 @@ def load() -> tuple[NDArray, NDArray, NDArray, NDArray]:
     """
     load data from the remote 'mnist' dataset
 
-    x_train.shape = (60000,28,28), which represents (epoch_size,height,width)
+    x_train.shape = (60000,28*28), which represents (epoch_size,height*width)
 
     y_train.shape = (60000,), which represents(epoch_size,)
     """
@@ -17,4 +17,7 @@ def load() -> tuple[NDArray, NDArray, NDArray, NDArray]:
     y_train = np.array(data["train"]["label"])
     x_test = np.array([np.array(img) for img in data["test"]["image"]])
     y_test = np.array(data["test"]["label"])
+    # flatten
+    x_train = x_train.reshape(x_train.shape[0], -1)
+    x_test = x_test.reshape(x_test.shape[0], -1)
     return (x_train, y_train, x_test, y_test)
