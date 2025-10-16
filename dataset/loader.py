@@ -15,7 +15,9 @@ def load(one_hot: bool = False) -> tuple[NDArray, NDArray, NDArray, NDArray]:
 
     For example, the label 1 is represented in one-hot encoding as [0, 1, 0, 0, 0, 0, 0, 0, 0, 0].
     """
-    data: DatasetDict = load_dataset("ylecun/mnist")  # type:ignore
+    data: DatasetDict = load_dataset(
+        "ylecun/mnist", download_mode=DownloadMode.REUSE_DATASET_IF_EXISTS
+    )  # type:ignore
     assert isinstance(data, DatasetDict)
     x_train = np.array([np.array(img) for img in data["train"]["image"]])
     y_train = np.array(data["train"]["label"])
