@@ -3,10 +3,8 @@ from typing import Any, Union
 import numpy as np
 from numpy.typing import NDArray
 
-Var = Union[NDArray, int, float]
 
-
-def sigmoid(z: Var) -> Var:
+def sigmoid(z: NDArray) -> NDArray:
     """
     sigmoid function
 
@@ -15,7 +13,7 @@ def sigmoid(z: Var) -> Var:
     return 1 / (1 + np.exp(-z))
 
 
-def tahn(z: Var) -> Var:
+def tahn(z: NDArray) -> NDArray:
     """
     tahn fuction
 
@@ -24,7 +22,7 @@ def tahn(z: Var) -> Var:
     return (np.exp(z) - np.exp(-z)) / (np.exp(z) + np.exp(-z))
 
 
-def relu(z: Var) -> Var:
+def relu(z: NDArray) -> NDArray:
     """
     relu function
 

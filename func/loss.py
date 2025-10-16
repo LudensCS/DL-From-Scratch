@@ -1,8 +1,8 @@
 import numpy as np
-from func.activations import Var
+from numpy.typing import NDArray
 
 
-def mean_squared(a: Var, y: Var) -> Var:
+def mean_squared(a: NDArray, y: NDArray) -> float:
     """
     mean squared error function
 
@@ -10,10 +10,14 @@ def mean_squared(a: Var, y: Var) -> Var:
 
     y : True labels
     """
-    return np.sum((a - y) ** 2) / 2
+    if a.ndim == 1:
+        a = a.reshape(1, -1)
+        y = y.reshape(1, -1)
+    batch_size = y.shape[0]
+    return np.sum((a - y) ** 2 / 2) / batch_size
 
 
-def cross_entropy(a: Var, y: Var) -> Var:
+def cross_entropy(a: NDArray, y: NDArray) -> float:
     """
     cross entropy error function
 
@@ -23,5 +27,9 @@ def cross_entropy(a: Var, y: Var) -> Var:
 
     offset : a protective offset to avoid calculating log(0)
     """
+    if a.ndim == 1:
+        a = a.reshape(1, -1)
+        y = y.reshape(1, -1)
     offset = 1e-7
-    return -np.sum(y * np.log(a + offset))
+    batch_size = y.shape[0]
+    return -np.sum(y * np.log(a + offset)) / batch_size

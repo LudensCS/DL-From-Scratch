@@ -1,9 +1,8 @@
 import numpy as np
+from numpy.typing import NDArray
 
-from func.activations import Var
 
-
-def softmax(z: Var) -> Var:
+def softmax(z: NDArray) -> NDArray:
     """
     softmax function
 
@@ -11,6 +10,8 @@ def softmax(z: Var) -> Var:
 
     use it to normalize output layer
     """
-    C = np.max(z)
+    if z.ndim == 1:
+        z = z.reshape(1, -1)
+    C = np.max(z, axis=1, keepdims=True)
     exp_z = np.exp(z - C)
-    return exp_z / np.sum(exp_z)
+    return exp_z / np.sum(exp_z, axis=1, keepdims=True)
