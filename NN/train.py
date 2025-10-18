@@ -12,12 +12,12 @@ from NN import MultiLayerNet
 from .persistence import load_model, save_model
 
 
-def train(epoch_size: int = 1, batch_size: int = 100, learning_rate: float = 0.01):
+def train(epoch_size: int, batch_size: int = 100, learning_rate: float = 0.01):
     (x_train, y_train, x_test, y_test) = dataset.load(one_hot=True)
     # random number generator
     # nn = TwoLayerNet(x_train.shape[1], 10, 10)
     nn = MultiLayerNet(x_train.shape[1], 10, 10)
-    # nn = load_model("./models/TLN.pkl")
+    nn = load_model("./models/MLN.pkl")
     rng = np.random.default_rng()
     acc: list = list()
     lss: list = list()
