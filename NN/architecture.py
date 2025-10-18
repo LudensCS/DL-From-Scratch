@@ -48,7 +48,7 @@ class TwoLayerNet:
             self.params[key] -= grads[key] * learning_rate
 
 
-class MutiLayerNet:
+class MultiLayerNet:
     def __init__(
         self,
         input_size: int,
