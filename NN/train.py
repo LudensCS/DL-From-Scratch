@@ -2,25 +2,22 @@
 Methods for training models
 """
 
-import pickle
-
 import dataset
 import matplotlib.pyplot as plt
 import numpy as np
 from rich.progress import Progress
+
+from NN import MutiLayerNet
 
 from .persistence import load_model, save_model
 
 
 def train(epoch_size: int = 1, batch_size: int = 100, learning_rate: float = 0.01):
     (x_train, y_train, x_test, y_test) = dataset.load(one_hot=True)
-    # x_train = x_train[:6000]
-    # y_train = y_train[:6000]
-    # x_test = x_test[:1000]
-    # y_test = y_test[:1000]
     # random number generator
     # nn = TwoLayerNet(x_train.shape[1], 10, 10)
-    nn = load_model("./models/TLN.pkl")
+    nn = MutiLayerNet(x_train.shape[1], 10, 10)
+    # nn = load_model("./models/TLN.pkl")
     rng = np.random.default_rng()
     acc: list = list()
     lss: list = list()
@@ -55,11 +52,13 @@ def train(epoch_size: int = 1, batch_size: int = 100, learning_rate: float = 0.0
                     )
                 else:
                     progress.update(task_batch, advance=1)
+                progress.update(
+                    task_epoch, advance=float(batch_size) / x_train.shape[0]
+                )
             acc.append(nn.accuracy(x_test, y_test))
-            progress.update(task_epoch, advance=1)
             progress.remove_task(task_batch)
 
-    save_model(nn, "./models/TLN.pkl")
+    save_model(nn, "./models/MLN.pkl")
     plt.figure(figsize=(7, 4))
     plt.plot(np.arange(len(acc)), acc, label="Accuracy", linewidth=2)
     plt.xlabel("epoch times")
