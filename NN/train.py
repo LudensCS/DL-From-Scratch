@@ -16,8 +16,8 @@ def train(epoch_size: int, batch_size: int = 100, learning_rate: float = 0.01):
     (x_train, y_train, x_test, y_test) = dataset.load(one_hot=True)
     # random number generator
     # nn = TwoLayerNet(x_train.shape[1], 10, 10)
-    nn = MultiLayerNet(x_train.shape[1], 10, 10)
-    nn = load_model("./models/MLN.pkl")
+    nn = MultiLayerNet(x_train.shape[1], 50, 10)
+    # nn = load_model("./models/MLN.pkl")
     rng = np.random.default_rng()
     acc: list = list()
     lss: list = list()
