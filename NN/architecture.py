@@ -1,61 +1,42 @@
-from typing import Dict, OrderedDict
+from typing import Dict, Optional, OrderedDict, Protocol, runtime_checkable
 
 import func
 import numpy as np
 from numpy.typing import NDArray
 
-import NN.layers
+from NN import layers, optimizers
 
 
-class TwoLayerNet:
-    """
-    neural network with single hidden layer
-    """
+@runtime_checkable
+class NeuralNetwork(Protocol):
+    optimizer: Optional[optimizers.Optimizer]
+    params: dict[str, NDArray]
+    layers: OrderedDict[str, layers.Layer]
 
-    def __init__(self, input_size: int, hidden_size: int, output_size: int):
-        self.params: dict[str, NDArray] = dict()
-        self.params["w1"] = np.random.randn(input_size, hidden_size)
-        self.params["b1"] = np.zeros((1, hidden_size))
-        self.params["w2"] = np.random.randn(hidden_size, output_size)
-        self.params["b2"] = np.zeros((1, output_size))
-
-    def predict(self, x: NDArray) -> NDArray:
-        a1 = np.dot(x, self.params["w1"]) + self.params["b1"]
-        z1 = func.sigmoid(a1)
-        a2 = np.dot(z1, self.params["w2"]) + self.params["b2"]
-        y = func.softmax(a2)
-        return y
-
-    def loss(self, x: NDArray, y: NDArray) -> float:
-        a = self.predict(x)
-        return func.cross_entropy(a, y)
-
-    def accuracy(self, x: NDArray, y: NDArray) -> float:
-        a = self.predict(x)
-        batch_size = a.shape[0]
-        return np.sum(np.argmax(a, axis=1) == np.argmax(y, axis=1)) / float(batch_size)
-
-    def numerical_gradient(self, x: NDArray, y: NDArray) -> dict:
-        loss_param = lambda W: self.loss(x, y)
-        grads: dict[str, NDArray] = dict()
-        for key in ("w1", "b1", "w2", "b2"):
-            grads[key] = func.numerical_gradient(loss_param, self.params[key])
-        return grads
-
-    def gradient_descent(self, x: NDArray, y: NDArray, learning_rate: float = 0.01):
-        grads = self.numerical_gradient(x, y)
-        for key in ("w1", "b1", "w2", "b2"):
-            self.params[key] -= grads[key] * learning_rate
+    def predict(self, x: NDArray) -> NDArray: ...
+    def loss(self, x: NDArray, y: NDArray) -> float: ...
+    def configure_optimizer(self, optimizer: optimizers.Optimizer) -> None: ...
+    def accuracy(self, x: NDArray, y: NDArray) -> float: ...
+    def autograd(self, x: NDArray, y: NDArray) -> tuple[dict[str, NDArray], float]: ...
+    def train_step(
+        self, x: NDArray, y: NDArray, learning_rate: Optional[float]
+    ) -> float: ...
 
 
 class MultiLayerNet:
+    """
+    neural network with multiple hidden layers
+    """
+
     def __init__(
         self,
         input_size: int,
         hidden_size: int,
         output_size: int,
+        optimizer: Optional[optimizers.Optimizer] = None,
         weight_init: float = 0.01,
     ) -> None:
+        self.optimizer = optimizer or optimizers.SGD()
         # initial params
         self.params: Dict[str, NDArray] = dict()
         self.params["w1"] = weight_init * np.random.randn(input_size, hidden_size)
@@ -64,12 +45,12 @@ class MultiLayerNet:
         self.params["b2"] = np.zeros((1, output_size))
 
         # initial layers
-        self.layers: OrderedDict = OrderedDict()
-        self.layers["Affine1"] = NN.Affine(self.params["w1"], self.params["b1"])
-        self.layers["Relu1"] = NN.ReLU()
-        self.layers["Affine2"] = NN.Affine(self.params["w2"], self.params["b2"])
+        self.layers: OrderedDict[str, layers.Layer] = OrderedDict()
+        self.layers["Affine1"] = layers.Affine(self.params["w1"], self.params["b1"])
+        self.layers["Relu1"] = layers.ReLU()
+        self.layers["Affine2"] = layers.Affine(self.params["w2"], self.params["b2"])
 
-        self.lastLayer = NN.SoftmaxWithLoss()
+        self.lastLayer = layers.SoftmaxWithLoss()
 
     def predict(self, x: NDArray) -> NDArray:
         for layer in self.layers.values():
@@ -92,12 +73,12 @@ class MultiLayerNet:
             grads[key] = func.numerical_gradient(loss_param, self.params[key])
         return grads
 
-    def gradient(self, x: NDArray, y: NDArray) -> dict:
+    def autograd(self, x: NDArray, y: NDArray) -> tuple[dict[str, NDArray], float]:
         """
         calc gradient by backward propagation
         """
         # forward
-        self.loss(x, y)
+        loss = self.loss(x, y)
         # backward
         dout = self.lastLayer.backward(dout=1)
         for layer in reversed(self.layers.values()):
@@ -108,11 +89,22 @@ class MultiLayerNet:
         grads["b1"] = self.layers["Affine1"].db
         grads["w2"] = self.layers["Affine2"].dw
         grads["b2"] = self.layers["Affine2"].db
-        return grads
+        return grads, loss
 
-    def gradient_descent(
-        self, x: NDArray, y: NDArray, learning_rate: float = 0.01
-    ) -> None:
-        grads = self.gradient(x, y)
-        for key in ("w1", "b1", "w2", "b2"):
-            self.params[key] -= grads[key] * learning_rate
+    def configure_optimizer(self, optimizer: optimizers.Optimizer) -> None:
+        self.optimizer = optimizer
+
+    def train_step(
+        self, x: NDArray, y: NDArray, learning_rate: Optional[float] = None
+    ) -> float:
+        grads, loss = self.autograd(x, y)
+        if learning_rate is not None:
+            old_lr = self.optimizer.learning_rate
+            try:
+                self.optimizer.learning_rate = learning_rate
+                self.optimizer.update(self.params, grads)
+            finally:
+                self.optimizer.learning_rate = old_lr
+        else:
+            self.optimizer.update(self.params, grads)
+        return loss

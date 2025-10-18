@@ -1,6 +1,13 @@
+from typing import Any, Protocol
+
 import func
 import numpy as np
 from numpy.typing import NDArray
+
+
+class Layer(Protocol):
+    def forward(self, x: NDArray) -> NDArray: ...
+    def backward(self, dout: Any) -> NDArray: ...
 
 
 class ReLU:
@@ -66,5 +73,5 @@ class SoftmaxWithLoss:
 
     def backward(self, dout: float = 1) -> NDArray:
         batch_size: float = self.y.shape[0]
-        dx = (self.out - self.y) / batch_size
+        dx = dout * (self.out - self.y) / batch_size
         return dx

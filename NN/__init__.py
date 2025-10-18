@@ -7,6 +7,7 @@ as well as many neural network architectures
 
 from .architecture import *
 from .check import *
-from .layers import *  # noqa: F403
+from .layers import *
+from .optimizers import *
 from .persistence import *
 from .train import *

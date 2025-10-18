@@ -2,6 +2,8 @@
 Methods for training models
 """
 
+from typing import Optional, cast
+
 import dataset
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,21 +14,23 @@ from NN import MultiLayerNet
 from .persistence import load_model, save_model
 
 
-def train(epoch_size: int, batch_size: int = 100, learning_rate: float = 0.01):
+def train(
+    epoch_size: int, batch_size: int = 100, learning_rate: Optional[float] = None
+):
     (x_train, y_train, x_test, y_test) = dataset.load(one_hot=True)
     # random number generator
-    # nn = TwoLayerNet(x_train.shape[1], 10, 10)
-    nn = MultiLayerNet(x_train.shape[1], 50, 10)
-    # nn = load_model("./models/MLN.pkl")
+    # nn = MultiLayerNet(x_train.shape[1], 100, 10)
+    nn = load_model("./models/MLN.pkl")
     rng = np.random.default_rng()
     acc: list = list()
     lss: list = list()
-    acc.append(nn.accuracy(x_test, y_test))
     with Progress(transient=True) as progress:
         task_epoch = progress.add_task(
-            description="[cyan]Training...", total=epoch_size
+            description="[cyan]Training...",
+            total=epoch_size * (x_train.shape[0] // batch_size),
         )
         Loss = nn.loss(x_test, y_test)
+        acc.append(nn.accuracy(x_test, y_test))
         lss.append(Loss)
         for epoch in range(epoch_size):
             idx = rng.permutation(x_train.shape[0])
@@ -37,24 +41,19 @@ def train(epoch_size: int, batch_size: int = 100, learning_rate: float = 0.01):
             for batch in range(x_train.shape[0] // batch_size):
                 st: int = batch * batch_size
                 ed: int = (batch + 1) * batch_size
-                nn.gradient_descent(
+                Loss = nn.train_step(
                     x_train[idx[st:ed]],
                     y_train[idx[st:ed]],
                     learning_rate=learning_rate,
                 )
                 if batch % 10 == 9:
-                    Loss = nn.loss(x_train[idx[st:ed]], y_train[idx[st:ed]])
                     lss.append(Loss)
-                    progress.update(
-                        task_batch,
-                        advance=1,
-                        description=f"[magenta]Epoch {epoch + 1} Loss={Loss:.4f}",
-                    )
-                else:
-                    progress.update(task_batch, advance=1)
                 progress.update(
-                    task_epoch, advance=float(batch_size) / x_train.shape[0]
+                    task_batch,
+                    advance=1,
+                    description=f"[magenta]Epoch {epoch + 1} Loss={Loss:.4f}",
                 )
+                progress.update(task_epoch, advance=1)
             acc.append(nn.accuracy(x_test, y_test))
             progress.remove_task(task_batch)
 
