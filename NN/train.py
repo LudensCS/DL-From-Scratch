@@ -32,11 +32,15 @@ def train(
         Loss = nn.loss(x_test, y_test)
         acc.append(nn.accuracy(x_test, y_test))
         lss.append(Loss)
+        task_batch = progress.add_task(
+            description=f"[magenta]Epoch 1 Loss={Loss:.4f}",
+            total=x_train.shape[0] // batch_size,
+        )
         for epoch in range(epoch_size):
             idx = rng.permutation(x_train.shape[0])
-            task_batch = progress.add_task(
-                description=f"[magenta]Epoch {epoch + 1} Loss={Loss:.4f}",
-                total=x_train.shape[0] // batch_size,
+            progress.reset(task_batch, total=x_train.shape[0] // batch_size)
+            progress.update(
+                task_batch, description=f"[magenta]Epoch {epoch + 1} Loss={Loss:.4f}"
             )
             for batch in range(x_train.shape[0] // batch_size):
                 st: int = batch * batch_size
@@ -55,7 +59,6 @@ def train(
                 )
                 progress.update(task_epoch, advance=1)
             acc.append(nn.accuracy(x_test, y_test))
-            progress.remove_task(task_batch)
 
     save_model(nn, "./models/MLN.pkl")
     plt.figure(figsize=(7, 4))
