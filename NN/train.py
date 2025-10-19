@@ -19,8 +19,8 @@ def train(
 ):
     (x_train, y_train, x_test, y_test) = dataset.load(one_hot=True)
     # random number generator
-    # nn = MultiLayerNet(x_train.shape[1], 100, 10, optimizer=optimizers.RMSProp())
-    nn = load_model("./models/MLN.pkl")
+    nn = MultiLayerNet(x_train.shape[1], 100, 10, optimizer=optimizers.Adam())
+    # nn = load_model("./models/MLN.pkl")
     rng = np.random.default_rng()
     acc: list = list()
     lss: list = list()

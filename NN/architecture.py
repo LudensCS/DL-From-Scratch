@@ -1,4 +1,4 @@
-from typing import Dict, Optional, OrderedDict, Protocol, runtime_checkable
+from typing import Dict, Optional, OrderedDict, Protocol, cast, runtime_checkable
 
 import func
 import numpy as np
@@ -85,10 +85,10 @@ class MultiLayerNet:
             dout = layer.backward(dout)
 
         grads: dict[str, NDArray] = dict()
-        grads["w1"] = self.layers["Affine1"].dw
-        grads["b1"] = self.layers["Affine1"].db
-        grads["w2"] = self.layers["Affine2"].dw
-        grads["b2"] = self.layers["Affine2"].db
+        grads["w1"] = cast(layers.Affine, self.layers["Affine1"]).dw
+        grads["b1"] = cast(layers.Affine, self.layers["Affine1"]).db
+        grads["w2"] = cast(layers.Affine, self.layers["Affine2"]).dw
+        grads["b2"] = cast(layers.Affine, self.layers["Affine2"]).db
         return grads, loss
 
     def configure_optimizer(self, optimizer: optimizers.Optimizer) -> None:
