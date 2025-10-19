@@ -1,10 +1,11 @@
-from typing import Any, Protocol
+from typing import Any, Protocol, runtime_checkable
 
 import func
 import numpy as np
 from numpy.typing import NDArray
 
 
+@runtime_checkable
 class Layer(Protocol):
     def forward(self, x: NDArray) -> NDArray: ...
     def backward(self, dout: Any) -> NDArray: ...
