@@ -1,4 +1,4 @@
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 import func
 import numpy as np
@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 @runtime_checkable
 class Layer(Protocol):
     def forward(self, x: NDArray) -> NDArray: ...
-    def backward(self, dout: Any) -> NDArray: ...
+    def backward(self, dout: NDArray) -> NDArray: ...
 
 
 class ReLU:
@@ -76,3 +76,39 @@ class SoftmaxWithLoss:
         batch_size: float = self.y.shape[0]
         dx = dout * (self.out - self.y) / batch_size
         return dx
+
+
+class Dropout:
+    def __init__(self, dropout_ratio: float = 0.5) -> None:
+        self.mask: NDArray
+        self.dropout_ratio = dropout_ratio
+
+    def forward(self, x: NDArray) -> NDArray:
+        self.mask = np.random.rand(*x.shape) > self.dropout_ratio
+        return self.mask * x
+
+    def backward(self, dout: NDArray) -> NDArray:
+        return self.mask * dout
+
+
+class BatchNorm:
+    def __init__(self) -> None:
+        pass
+
+    def forward(self, x: NDArray) -> NDArray: ...
+
+    def backward(self, dout: NDArray) -> NDArray: ...
+
+
+class Convolution:
+    def __init__(self) -> None: ...
+    def forward(self, x: NDArray) -> NDArray: ...
+    def backward(self, dout: NDArray) -> NDArray: ...
+
+
+class Pooling:
+    def __init__(self) -> None:
+        pass
+
+    def forward(self, x: NDArray) -> NDArray: ...
+    def backward(self, dout: NDArray) -> NDArray: ...

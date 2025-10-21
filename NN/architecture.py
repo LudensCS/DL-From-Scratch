@@ -1,3 +1,4 @@
+from enum import Flag
 from typing import Dict, Optional, OrderedDict, Protocol, cast, runtime_checkable
 
 import func
@@ -13,7 +14,7 @@ class NeuralNetwork(Protocol):
     params: dict[str, NDArray]
     layers: OrderedDict[str, layers.Layer]
 
-    def predict(self, x: NDArray) -> NDArray: ...
+    def predict(self, x: NDArray, train_flag: bool) -> NDArray: ...
     def loss(self, x: NDArray, y: NDArray) -> float: ...
     def configure_optimizer(self, optimizer: optimizers.Optimizer) -> None: ...
     def accuracy(self, x: NDArray, y: NDArray) -> float: ...
@@ -34,35 +35,40 @@ class MultiLayerNet:
         hidden_size: int,
         output_size: int,
         optimizer: Optional[optimizers.Optimizer] = None,
-        weight_init: float = 0.01,
     ) -> None:
         self.optimizer = optimizer or optimizers.SGD()
         # initial params
         self.params: Dict[str, NDArray] = dict()
-        self.params["w1"] = weight_init * np.random.randn(input_size, hidden_size)
+        self.params["w1"] = np.sqrt(2 / input_size) * np.random.randn(
+            input_size, hidden_size
+        )
         self.params["b1"] = np.zeros((1, hidden_size))
-        self.params["w2"] = weight_init * np.random.randn(hidden_size, output_size)
+        self.params["w2"] = np.sqrt(2 / hidden_size) * np.random.randn(
+            hidden_size, output_size
+        )
         self.params["b2"] = np.zeros((1, output_size))
 
         # initial layers
         self.layers: OrderedDict[str, layers.Layer] = OrderedDict()
         self.layers["Affine1"] = layers.Affine(self.params["w1"], self.params["b1"])
         self.layers["Relu1"] = layers.ReLU()
+        self.layers["Dropout1"] = layers.Dropout(dropout_ratio=0.3)
         self.layers["Affine2"] = layers.Affine(self.params["w2"], self.params["b2"])
 
         self.lastLayer = layers.SoftmaxWithLoss()
 
-    def predict(self, x: NDArray) -> NDArray:
+    def predict(self, x: NDArray, train_flag: bool = True) -> NDArray:
         for layer in self.layers.values():
-            x = layer.forward(x)
+            if train_flag or not isinstance(layer, layers.Dropout):
+                x = layer.forward(x)
         return x
 
-    def loss(self, x: NDArray, y: NDArray) -> float:
-        a = self.predict(x)
+    def loss(self, x: NDArray, y: NDArray, train_flag: bool = True) -> float:
+        a = self.predict(x, train_flag)
         return self.lastLayer.forward(a, y)
 
     def accuracy(self, x: NDArray, y: NDArray) -> float:
-        a = self.predict(x)
+        a = self.predict(x, train_flag=False)
         batch_size = y.shape[0]
         return np.sum(np.argmax(a, axis=1) == np.argmax(y, axis=1)) / batch_size
 
